@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Inscription{% endblock %}
+
+{% block content %}
+<h2>Créer un compte</h2>
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <p>{{ form.full_name.label }} {{ form.full_name() }}</p>
+    <p>{{ form.email.label }} {{ form.email() }}</p>
+    <p>{{ form.password.label }} {{ form.password() }}</p>
+    <p>{{ form.confirm_password.label }} {{ form.confirm_password() }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+{% endblock %}

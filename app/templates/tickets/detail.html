@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ ticket.title }}{% endblock %}
+
+{% block content %}
+<h2>{{ ticket.title }}</h2>
+<p><strong>Statut :</strong> {{ ticket.status }}</p>
+<p><strong>Catégorie :</strong> {{ ticket.category.name }} | <strong>Priorité :</strong> {{ ticket.priority.name }}</p>
+<p>{{ ticket.description }}</p>
+
+{% if current_user.role in ['agent', 'admin'] %}
+<p>
+    Changer le statut :
+    <a href="{{ url_for('tickets.change_status', ticket_id=ticket.id, new_status='in_progress') }}">En cours</a> |
+    <a href="{{ url_for('tickets.change_status', ticket_id=ticket.id, new_status='resolved') }}">Résolu</a> |
+    <a href="{{ url_for('tickets.change_status', ticket_id=ticket.id, new_status='closed') }}">Fermé</a>
+</p>
+{% endif %}
+
+{% if current_user.role in ['agent', 'admin'] %}
+<h3>Assignation</h3>
+<p>Agent actuel : {{ ticket.agent.full_name if ticket.agent else "Non assigné" }}</p>
+<form method="POST">
+    {{ assign_form.hidden_tag() }}
+    <p>{{ assign_form.agent_id.label }} {{ assign_form.agent_id() }}</p>
+    <p>{{ assign_form.submit() }}</p>
+</form>
+{% endif %}
+
+<h3>Messages</h3>
+{% for message in ticket.messages %}
+<p><strong>{{ message.author.full_name }}</strong> ({{ message.created_at }}) : {{ message.content }}</p>
+{% endfor %}
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <p>{{ form.content.label }} {{ form.content() }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+{% endblock %}

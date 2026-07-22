@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Administration{% endblock %}
+
+{% block content %}
+<h2>Tableau de bord admin</h2>
+<ul>
+    <li><a href="{{ url_for('admin.list_categories') }}">Gérer les catégories</a></li>
+    <li><a href="{{ url_for('admin.list_priorities') }}">Gérer les priorités</a></li>
+    <li><a href="{{ url_for('admin.list_users') }}">Gérer les utilisateurs</a></li>
+</ul>
+{% endblock %}

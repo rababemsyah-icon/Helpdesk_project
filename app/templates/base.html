@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Helpdesk{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Helpdesk</h1>
+        <nav>
+            {% if current_user.is_authenticated %}
+                <span>Connecté : {{ current_user.full_name }} ({{ current_user.role }})</span>
+                <a href="{{ url_for('tickets.list_tickets') }}">Mes tickets</a>
+                {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('admin.dashboard') }}">Administration</a>
+                {% endif %}
+                <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Connexion</a>
+                <a href="{{ url_for('auth.register') }}">Inscription</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="flash-{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

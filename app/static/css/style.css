@@ -1,0 +1,6 @@
+body { font-family: Arial, sans-serif; margin: 2rem; }
+nav a { margin-right: 1rem; }
+.flash-messages { list-style: none; padding: 0; }
+.flash-success { color: green; }
+.flash-danger { color: red; }
+.flash-info { color: blue; }

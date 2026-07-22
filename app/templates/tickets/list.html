@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Mes tickets{% endblock %}
+
+{% block content %}
+<h2>Mes tickets</h2>
+<a href="{{ url_for('tickets.create_ticket') }}">+ Nouveau ticket</a>
+
+{% if tickets %}
+<table border="1" cellpadding="8">
+    <tr>
+        <th>Titre</th>
+        <th>Statut</th>
+        <th>Catégorie</th>
+        <th>Priorité</th>
+        <th></th>
+    </tr>
+    {% for ticket in tickets %}
+    <tr>
+        <td>{{ ticket.title }}</td>
+        <td>{{ ticket.status }}</td>
+        <td>{{ ticket.category.name }}</td>
+        <td>{{ ticket.priority.name }}</td>
+        <td><a href="{{ url_for('tickets.ticket_detail', ticket_id=ticket.id) }}">Voir</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>Aucun ticket pour le moment.</p>
+{% endif %}
+{% endblock %}
