@@ -3,12 +3,39 @@
 
 {% block content %}
 <h2>Créer un ticket</h2>
+
 <form method="POST">
-    {{ form.hidden_tag() }}
-    <p>{{ form.title.label }} {{ form.title() }}</p>
-    <p>{{ form.description.label }} {{ form.description() }}</p>
-    <p>{{ form.category_id.label }} {{ form.category_id() }}</p>
-    <p>{{ form.priority_id.label }} {{ form.priority_id() }}</p>
-    <p>{{ form.submit() }}</p>
+    <div class="mb-3">
+        <label for="title" class="form-label">Titre</label>
+        <input type="text" id="title" name="title" class="form-control" required>
+    </div>
+    
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea id="description" name="description" class="form-control" rows="4" required></textarea>
+    </div>
+    
+    <div class="mb-3">
+        <label for="category_id" class="form-label">Catégorie</label>
+        <select id="category_id" name="category_id" class="form-control" required>
+            <option value="">Sélectionnez une catégorie</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}">{{ category.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="mb-3">
+        <label for="priority_id" class="form-label">Priorité</label>
+        <select id="priority_id" name="priority_id" class="form-control" required>
+            <option value="">Sélectionnez une priorité</option>
+            {% for priority in priorities %}
+            <option value="{{ priority.id }}">{{ priority.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Créer le ticket</button>
+    <a href="{{ url_for('tickets.list_tickets') }}" class="btn btn-secondary">Annuler</a>
 </form>
 {% endblock %}

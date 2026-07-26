@@ -3,26 +3,41 @@
 
 {% block content %}
 <h2>Mes tickets</h2>
-<a href="{{ url_for('tickets.create_ticket') }}">+ Nouveau ticket</a>
+
+<div class="mb-3">
+    <a href="{{ url_for('tickets.new_ticket') }}" class="btn btn-primary">+ Nouveau ticket</a>
+</div>
 
 {% if tickets %}
-<table border="1" cellpadding="8">
-    <tr>
-        <th>Titre</th>
-        <th>Statut</th>
-        <th>Catégorie</th>
-        <th>Priorité</th>
-        <th></th>
-    </tr>
-    {% for ticket in tickets %}
-    <tr>
-        <td>{{ ticket.title }}</td>
-        <td>{{ ticket.status }}</td>
-        <td>{{ ticket.category.name }}</td>
-        <td>{{ ticket.priority.name }}</td>
-        <td><a href="{{ url_for('tickets.ticket_detail', ticket_id=ticket.id) }}">Voir</a></td>
-    </tr>
-    {% endfor %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Titre</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ticket in tickets %}
+        <tr>
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.title }}</td>
+            <td>
+                {% if ticket.status == 'open' %}
+                <span class="badge bg-success">Ouvert</span>
+                {% else %}
+                <span class="badge bg-secondary">Fermé</span>
+                {% endif %}
+            </td>
+            <td>{{ ticket.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>
+                <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" class="btn btn-sm btn-info">Voir</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% else %}
 <p>Aucun ticket pour le moment.</p>

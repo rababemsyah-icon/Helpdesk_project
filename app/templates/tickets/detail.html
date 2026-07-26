@@ -1,39 +1,69 @@
 {% extends "base.html" %}
-{% block title %}{{ ticket.title }}{% endblock %}
+{% block title %}Détail du ticket #{{ ticket.id }}{% endblock %}
 
 {% block content %}
-<h2>{{ ticket.title }}</h2>
-<p><strong>Statut :</strong> {{ ticket.status }}</p>
-<p><strong>Catégorie :</strong> {{ ticket.category.name }} | <strong>Priorité :</strong> {{ ticket.priority.name }}</p>
-<p>{{ ticket.description }}</p>
+<h2>Ticket #{{ ticket.id }} - {{ ticket.title }}</h2>
 
-{% if current_user.role in ['agent', 'admin'] %}
-<p>
-    Changer le statut :
-    <a href="{{ url_for('tickets.change_status', ticket_id=ticket.id, new_status='in_progress') }}">En cours</a> |
-    <a href="{{ url_for('tickets.change_status', ticket_id=ticket.id, new_status='resolved') }}">Résolu</a> |
-    <a href="{{ url_for('tickets.change_status', ticket_id=ticket.id, new_status='closed') }}">Fermé</a>
-</p>
-{% endif %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Statut :</strong> 
+                    {% if ticket.status == 'open' %}
+                    <span class="badge bg-success">Ouvert</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Fermé</span>
+                    {% endif %}
+                </p>
+                <p><strong>Catégorie :</strong> {{ ticket.category.name if ticket.category else 'Non définie' }}</p>
+                <p><strong>Priorité :</strong> {{ ticket.priority.name if ticket.priority else 'Non définie' }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Créé par :</strong> {{ ticket.requester.full_name }}</p>
+                <p><strong>Créé le :</strong> {{ ticket.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                <p><strong>Dernière mise à jour :</strong> {{ ticket.updated_at.strftime('%d/%m/%Y %H:%M') }}</p>
+            </div>
+        </div>
+        <div class="mt-3">
+            <h5>Description :</h5>
+            <p>{{ ticket.description }}</p>
+        </div>
+    </div>
+</div>
 
-{% if current_user.role in ['agent', 'admin'] %}
-<h3>Assignation</h3>
-<p>Agent actuel : {{ ticket.agent.full_name if ticket.agent else "Non assigné" }}</p>
-<form method="POST">
-    {{ assign_form.hidden_tag() }}
-    <p>{{ assign_form.agent_id.label }} {{ assign_form.agent_id() }}</p>
-    <p>{{ assign_form.submit() }}</p>
-</form>
-{% endif %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Messages</h5>
+    </div>
+    <div class="card-body">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="border-bottom mb-3 pb-3">
+                <div class="d-flex justify-content-between">
+                    <strong>{{ message.author.full_name }}</strong>
+                    <small class="text-muted">{{ message.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                </div>
+                <p class="mt-2">{{ message.content }}</p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">Aucun message pour ce ticket.</p>
+        {% endif %}
+        
+        {% if ticket.status == 'open' %}
+        <form method="POST" action="{{ url_for('tickets.add_message', ticket_id=ticket.id) }}" class="mt-3">
+            <div class="mb-3">
+                <label for="content" class="form-label">Ajouter un message</label>
+                <textarea id="content" name="content" class="form-control" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Envoyer</button>
+            <a href="{{ url_for('tickets.close_ticket', ticket_id=ticket.id) }}" class="btn btn-danger" onclick="return confirm('Fermer ce ticket ?')">Fermer le ticket</a>
+        </form>
+        {% else %}
+        <div class="alert alert-info">Ce ticket est fermé.</div>
+        {% endif %}
+    </div>
+</div>
 
-<h3>Messages</h3>
-{% for message in ticket.messages %}
-<p><strong>{{ message.author.full_name }}</strong> ({{ message.created_at }}) : {{ message.content }}</p>
-{% endfor %}
-
-<form method="POST">
-    {{ form.hidden_tag() }}
-    <p>{{ form.content.label }} {{ form.content() }}</p>
-    <p>{{ form.submit() }}</p>
-</form>
+<a href="{{ url_for('tickets.list_tickets') }}" class="btn btn-secondary">Retour à la liste</a>
 {% endblock %}

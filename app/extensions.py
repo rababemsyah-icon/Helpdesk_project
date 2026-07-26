@@ -5,3 +5,12 @@ from flask_migrate import Migrate
 db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
+
+def init_extensions(app):
+    db.init_app(app)
+    login_manager.init_app(app)
+    migrate.init_app(app, db)
+    
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Veuillez vous connecter pour accéder à cette page.'
+    login_manager.login_message_category = 'info'
