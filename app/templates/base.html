@@ -2,39 +2,128 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Helpdesk{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS personnalisé -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header>
-        <h1>Helpdesk</h1>
-        <nav>
-            {% if current_user.is_authenticated %}
-                <span>Connecté : {{ current_user.full_name }} ({{ current_user.role }})</span>
-                <a href="{{ url_for('tickets.list_tickets') }}">Mes tickets</a>
-                {% if current_user.role == 'admin' %}
-                <a href="{{ url_for('admin.dashboard') }}">Administration</a>
-                {% endif %}
-                <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
-            {% else %}
-                <a href="{{ url_for('auth.login') }}">Connexion</a>
-                <a href="{{ url_for('auth.register') }}">Inscription</a>
-            {% endif %}
-        </nav>
-    </header>
+    <!-- ===== NAVBAR ===== -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('tickets.list_tickets') }}">
+                <i class="fas fa-headset"></i> Helpdesk
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <span class="nav-link">
+                                <i class="fas fa-user-circle"></i> {{ current_user.full_name }}
+                                <span class="badge bg-primary ms-1">{{ current_user.role }}</span>
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('tickets.list_tickets') }}">
+                                <i class="fas fa-ticket-alt"></i> Mes tickets
+                            </a>
+                        </li>
+                        {% if current_user.role == 'admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                                <i class="fas fa-cog"></i> Admin
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> Déconnexion
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.login') }}">
+                                <i class="fas fa-sign-in-alt"></i> Connexion
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.register') }}">
+                                <i class="fas fa-user-plus"></i> Inscription
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    <main>
+    <!-- ===== MESSAGES FLASH ===== -->
+    <div class="container mt-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <ul class="flash-messages">
                 {% for category, message in messages %}
-                    <li class="flash-{{ category }}">{{ message }}</li>
+                    <div class="alert alert-{{ category }} alert-dismissible fade show fade-in" role="alert">
+                        <i class="fas 
+                            {% if category == 'success' %}fa-check-circle
+                            {% elif category == 'danger' %}fa-exclamation-circle
+                            {% elif category == 'warning' %}fa-exclamation-triangle
+                            {% else %}fa-info-circle{% endif %}
+                        "></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                 {% endfor %}
-                </ul>
             {% endif %}
         {% endwith %}
+    </div>
 
+    <!-- ===== CONTENU PRINCIPAL ===== -->
+    <main class="container fade-in">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        <div class="container">
+            <p class="mb-0">
+                &copy; 2026 Helpdesk - Tous droits réservés
+                <span class="mx-2">|</span>
+                <i class="fas fa-code"></i> Développé avec <i class="fas fa-heart" style="color: #ef4444;"></i>
+            </p>
+        </div>
+    </footer>
+
+    <!-- ===== SCRIPTS ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Auto-dismiss des alertes après 5 secondes -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    const closeBtn = alert.querySelector('.btn-close');
+                    if (closeBtn) {
+                        closeBtn.click();
+                    }
+                });
+            }, 5000);
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

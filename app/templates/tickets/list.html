@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Mes tickets{% endblock %}
-
 {% block content %}
+
 <h2>Mes tickets</h2>
 
 <div class="mb-3">
@@ -43,3 +43,58 @@
 <p>Aucun ticket pour le moment.</p>
 {% endif %}
 {% endblock %}
+
+<!-- Barre de recherche et filtres -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="q" class="form-control" 
+                       placeholder="Rechercher..." value="{{ current_filters.q or '' }}">
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">Tous statuts</option>
+                    <option value="open" {% if current_filters.status == 'open' %}selected{% endif %}>Ouvert</option>
+                    <option value="in_progress" {% if current_filters.status == 'in_progress' %}selected{% endif %}>En cours</option>
+                    <option value="resolved" {% if current_filters.status == 'resolved' %}selected{% endif %}>Résolu</option>
+                    <option value="closed" {% if current_filters.status == 'closed' %}selected{% endif %}>Fermé</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="category" class="form-select">
+                    <option value="">Toutes catégories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if current_filters.category|int == cat.id %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="priority" class="form-select">
+                    <option value="">Toutes priorités</option>
+                    {% for prio in priorities %}
+                    <option value="{{ prio.id }}" {% if current_filters.priority|int == prio.id %}selected{% endif %}>
+                        {{ prio.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">Filtrer</button>
+                <a href="{{ url_for('tickets.list_tickets') }}" class="btn btn-secondary">Réinitialiser</a>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Remplacer les badges par : -->
+{% if ticket.status == 'open' %}
+<span class="badge bg-danger">🔴 Ouvert</span>
+{% elif ticket.status == 'in_progress' %}
+<span class="badge bg-warning text-dark">🟡 En cours</span>
+{% elif ticket.status == 'resolved' %}
+<span class="badge bg-success">🟢 Résolu</span>
+{% elif ticket.status == 'closed' %}
+<span class="badge bg-secondary">⚪ Fermé</span>
+{% endif %}

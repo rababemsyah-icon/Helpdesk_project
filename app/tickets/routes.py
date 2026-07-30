@@ -1,11 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-
+from datetime import datetime
 from app.extensions import db
-from app.models import Category, Priority, Ticket, TicketMessage
+from app.models import Category, Priority, Ticket, TicketMessage, TicketLog
 
 tickets_bp = Blueprint('tickets', __name__, url_prefix='/tickets')
-
 
 @tickets_bp.route('/')
 @login_required
@@ -15,7 +14,6 @@ def list_tickets():
     else:
         tickets = Ticket.query.filter_by(requester_id=current_user.id).order_by(Ticket.created_at.desc()).all()
     return render_template('tickets/list.html', tickets=tickets)
-
 
 @tickets_bp.route('/new', methods=['GET', 'POST'])
 @login_required
@@ -43,21 +41,9 @@ def new_ticket():
         flash('Ticket créé avec succès !', 'success')
         return redirect(url_for('tickets.list_tickets'))
     
-    # Catégories et priorités en dur (pour éviter les problèmes MySQL)
-    categories = [
-        {'id': 1, 'name': 'Informatique'},
-        {'id': 2, 'name': 'Réseau'},
-        {'id': 3, 'name': 'Email'},
-        {'id': 4, 'name': 'Téléphonie'},
-        {'id': 5, 'name': 'Imprimante'},
-        {'id': 6, 'name': 'Autre'}
-    ]
-    priorities = [
-        {'id': 1, 'name': 'Basse'},
-        {'id': 2, 'name': 'Moyenne'},
-        {'id': 3, 'name': 'Haute'},
-        {'id': 4, 'name': 'Critique'}
-    ]
+    # Catégories et priorités
+    categories = Category.query.all()
+    priorities = Priority.query.all()
     
     return render_template('tickets/create.html', categories=categories, priorities=priorities)
 
@@ -72,7 +58,9 @@ def view_ticket(ticket_id):
         return redirect(url_for('tickets.list_tickets'))
     
     messages = TicketMessage.query.filter_by(ticket_id=ticket.id).order_by(TicketMessage.created_at.asc()).all()
-    return render_template('tickets/detail.html', ticket=ticket, messages=messages)
+    logs = TicketLog.query.filter_by(ticket_id=ticket.id).order_by(TicketLog.created_at.desc()).all()
+    
+    return render_template('tickets/detail.html', ticket=ticket, messages=messages, logs=logs)
 
 
 @tickets_bp.route('/<int:ticket_id>/message', methods=['POST'])
@@ -114,7 +102,121 @@ def close_ticket(ticket_id):
         return redirect(url_for('tickets.list_tickets'))
     
     ticket.status = 'closed'
+    ticket.closed_at = datetime.utcnow()
     db.session.commit()
     flash('Ticket fermé.', 'info')
     
+    return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+
+
+# ===== NOUVELLES ROUTES : ASSIGNATION ET STATUT =====
+
+@tickets_bp.route('/<int:ticket_id>/assign', methods=['POST'])
+@login_required
+def assign_ticket(ticket_id):
+    """Prendre en charge un ticket (agent/admin)"""
+    ticket = Ticket.query.get_or_404(ticket_id)
+    
+    if current_user.role not in ['agent', 'admin']:
+        flash('Vous n\'avez pas les droits.', 'danger')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+    
+    # Si le ticket est déjà assigné à quelqu'un d'autre
+    if ticket.assignee_id and ticket.assignee_id != current_user.id:
+        flash('Ce ticket est déjà pris en charge par un autre agent.', 'warning')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+    
+    ticket.assignee_id = current_user.id
+    ticket.status = 'in_progress'
+    
+    # Log
+    log = TicketLog(
+        ticket_id=ticket.id,
+        user_id=current_user.id,
+        action='assign',
+        new_value=f'Assigné à {current_user.full_name}'
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    flash('Ticket pris en charge avec succès !', 'success')
+    return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+
+
+@tickets_bp.route('/<int:ticket_id>/status', methods=['POST'])
+@login_required
+def update_status(ticket_id):
+    """Changer le statut d'un ticket (agent/admin)"""
+    ticket = Ticket.query.get_or_404(ticket_id)
+    
+    if current_user.role not in ['agent', 'admin']:
+        flash('Vous n\'avez pas les droits.', 'danger')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+    
+    new_status = request.form.get('status')
+    old_status = ticket.status
+    
+    if new_status not in ['open', 'in_progress', 'resolved', 'closed']:
+        flash('Statut invalide.', 'danger')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+    
+    # Ne pas permettre de passer de closed à autre chose (sauf admin)
+    if ticket.status == 'closed' and current_user.role != 'admin':
+        flash('Ce ticket est fermé, vous ne pouvez plus le modifier.', 'danger')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+    
+    ticket.status = new_status
+    
+    if new_status == 'resolved':
+        ticket.resolved_at = datetime.utcnow()
+    elif new_status == 'closed':
+        ticket.closed_at = datetime.utcnow()
+    elif new_status == 'open':
+        ticket.resolved_at = None
+        ticket.closed_at = None
+    
+    # Log
+    log = TicketLog(
+        ticket_id=ticket.id,
+        user_id=current_user.id,
+        action='status_change',
+        old_value=old_status,
+        new_value=new_status
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    flash(f'Statut changé : {old_status} → {new_status}', 'success')
+    return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+
+
+@tickets_bp.route('/<int:ticket_id>/unassign', methods=['POST'])
+@login_required
+def unassign_ticket(ticket_id):
+    """Libérer un ticket (agent/admin)"""
+    ticket = Ticket.query.get_or_404(ticket_id)
+    
+    if current_user.role not in ['agent', 'admin']:
+        flash('Vous n\'avez pas les droits.', 'danger')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+    
+    # Seul l'agent assigné ou l'admin peut libérer
+    if ticket.assignee_id != current_user.id and current_user.role != 'admin':
+        flash('Vous n\'êtes pas assigné à ce ticket.', 'danger')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+    
+    ticket.assignee_id = None
+    ticket.status = 'open'
+    
+    # Log
+    log = TicketLog(
+        ticket_id=ticket.id,
+        user_id=current_user.id,
+        action='unassign',
+        new_value='Libéré'
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    flash('Ticket libéré avec succès.', 'info')
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
