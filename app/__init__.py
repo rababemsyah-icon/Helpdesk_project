@@ -22,4 +22,9 @@ def create_app():
     app.register_blueprint(tickets_bp)
     app.register_blueprint(admin_bp)
 
+    # --- AJOUT IMPORTANT : La route de la page d'accueil ---
+    @app.route('/')
+    def home():
+        return "Bienvenue sur mon Helpdesk !"
+
     return app
