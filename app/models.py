@@ -15,7 +15,8 @@ class User(UserMixin, db.Model):
     # Relations
     tickets_created = db.relationship('Ticket', foreign_keys='Ticket.requester_id', backref='requester', lazy=True)
     tickets_assigned = db.relationship('Ticket', foreign_keys='Ticket.assignee_id', backref='assignee', lazy=True)
-    logs = db.relationship('TicketLog', backref='user', lazy=True)
+    # CORRECTION ICI : On change 'user' par 'author' pour éviter le conflit avec user_id
+    logs = db.relationship('TicketLog', backref='author', lazy=True)
 
 
 class Category(db.Model):
@@ -58,7 +59,7 @@ class Ticket(db.Model):
     
     # Relations
     messages = db.relationship('TicketMessage', backref='ticket', lazy=True)
-    logs = db.relationship('TicketLog', backref='ticket', lazy=True)
+    logs = db.relationship('TicketLog', backref='ticket', lazy=True) # C'est ICI que se crée la relation 'ticket'
 
 
 class TicketMessage(db.Model):
@@ -85,9 +86,9 @@ class TicketLog(db.Model):
     new_value = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    ticket = db.relationship('Ticket', backref='ticket_logs', lazy=True)
-    # --- CORRECTION ICI : La ligne ci-dessous a été supprimée pour éviter le conflit ---
-    # user = db.relationship('User', backref='user_logs', lazy=True) 
+    # CORRECTION MAJEURE ICI : On SUPPRIME la ligne 'ticket = db.relationship(...)' 
+    # car la relation 'ticket' est déjà gérée par le backref dans la classe Ticket.
+    # Cela évite l'erreur "ArgumentError" au démarrage.
 
 
 # ===== USER LOADER =====

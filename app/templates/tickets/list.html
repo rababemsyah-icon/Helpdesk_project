@@ -4,46 +4,6 @@
 
 <h2>Mes tickets</h2>
 
-<div class="mb-3">
-    <a href="{{ url_for('tickets.new_ticket') }}" class="btn btn-primary">+ Nouveau ticket</a>
-</div>
-
-{% if tickets %}
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Titre</th>
-            <th>Statut</th>
-            <th>Date</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for ticket in tickets %}
-        <tr>
-            <td>{{ ticket.id }}</td>
-            <td>{{ ticket.title }}</td>
-            <td>
-                {% if ticket.status == 'open' %}
-                <span class="badge bg-success">Ouvert</span>
-                {% else %}
-                <span class="badge bg-secondary">Fermé</span>
-                {% endif %}
-            </td>
-            <td>{{ ticket.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-            <td>
-                <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" class="btn btn-sm btn-info">Voir</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>Aucun ticket pour le moment.</p>
-{% endif %}
-{% endblock %}
-
 <!-- Barre de recherche et filtres -->
 <div class="card mb-4">
     <div class="card-body">
@@ -83,18 +43,56 @@
             </div>
             <div class="col-md-3">
                 <button type="submit" class="btn btn-primary">Filtrer</button>
-                <a href="{{ url_for('tickets.list_tickets') }}" class="btn btn-secondary">Réinitialiser</a>
+                <!-- URL directe -->
+                <a href="/tickets/" class="btn btn-secondary">Réinitialiser</a>
             </div>
         </form>
     </div>
 </div>
-<!-- Remplacer les badges par : -->
-{% if ticket.status == 'open' %}
-<span class="badge bg-danger">🔴 Ouvert</span>
-{% elif ticket.status == 'in_progress' %}
-<span class="badge bg-warning text-dark">🟡 En cours</span>
-{% elif ticket.status == 'resolved' %}
-<span class="badge bg-success">🟢 Résolu</span>
-{% elif ticket.status == 'closed' %}
-<span class="badge bg-secondary">⚪ Fermé</span>
+
+<div class="mb-3">
+    <!-- URL directe -->
+    <a href="/tickets/new" class="btn btn-primary">+ Nouveau ticket</a>
+</div>
+
+{% if tickets %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Titre</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ticket in tickets %}
+        <tr>
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.title }}</td>
+            <td>
+                {% if ticket.status == 'open' %}
+                <span class="badge bg-danger">🔴 Ouvert</span>
+                {% elif ticket.status == 'in_progress' %}
+                <span class="badge bg-warning text-dark">🟡 En cours</span>
+                {% elif ticket.status == 'resolved' %}
+                <span class="badge bg-success">🟢 Résolu</span>
+                {% elif ticket.status == 'closed' %}
+                <span class="badge bg-secondary">⚪ Fermé</span>
+                {% endif %}
+            </td>
+            <td>{{ ticket.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>
+                <!-- URL directe -->
+                <a href="/tickets/{{ ticket.id }}" class="btn btn-sm btn-info">Voir</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Aucun ticket pour le moment.</p>
 {% endif %}
+
+{% endblock %}
